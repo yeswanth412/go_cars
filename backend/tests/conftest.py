@@ -26,13 +26,33 @@ def db_session():
 
     yield db, created_user_ids
 
-    # Cleanup test users (cascades to user_roles, customer_profiles, owner_profiles, driver_profiles)
-    for uid in created_user_ids:
-        user = db.query(User).filter(User.id == uid).first()
-        if user:
-            db.delete(user)
-    db.commit()
-    db.close()
+    # Cleanup test users (cascades to user_roles, customer_profiles, owner_profiles, driver_profiles, cars, bookings)
+    try:
+        from app.models.booking import Booking
+        from app.models.car import Car, CarImage, CarDocument, CarBlackoutPeriod
+
+        for uid in created_user_ids:
+            db.query(Booking).filter(
+                (Booking.customer_id == uid) | (Booking.driver_id == uid)
+            ).delete(synchronize_session=False)
+
+            cars = db.query(Car).filter(Car.owner_id == uid).all()
+            for car in cars:
+                db.query(Booking).filter(Booking.car_id == car.id).delete(synchronize_session=False)
+                db.query(CarImage).filter(CarImage.car_id == car.id).delete(synchronize_session=False)
+                db.query(CarDocument).filter(CarDocument.car_id == car.id).delete(synchronize_session=False)
+                db.query(CarBlackoutPeriod).filter(CarBlackoutPeriod.car_id == car.id).delete(synchronize_session=False)
+                db.delete(car)
+            db.commit()
+
+            user = db.query(User).filter(User.id == uid).first()
+            if user:
+                db.delete(user)
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
 
 
 def create_user_helper(

@@ -30,6 +30,44 @@ from app.schemas.admin import (
     UserDetailResponse,
     PaginatedUserResponse,
 )
+from app.schemas.car_image import (
+    CarImageCreateRequest,
+    CarImageResponse,
+)
+from app.schemas.car_document import (
+    CarDocumentCreateRequest,
+    CarDocumentResponse,
+    DocumentVerificationRequest,
+)
+from app.schemas.blackout_period import (
+    BlackoutPeriodCreateRequest,
+    BlackoutPeriodResponse,
+)
+from app.schemas.car import (
+    CarCreateRequest,
+    CarUpdateRequest,
+    CarApprovalRequest,
+    CarStatusUpdateRequest,
+    CarDetailResponse,
+    CarPublicResponse,
+    PaginatedCarPublicResponse,
+    PaginatedCarDetailResponse,
+)
+
+from app.schemas.booking import (
+    BookingCreateRequest,
+    BookingPricingEstimateRequest,
+    BookingPricingEstimateResponse,
+    BookingPaymentConfirmRequest,
+    BookingDecisionRequest,
+    BookingDriverAssignRequest,
+    BookingCancelRequest,
+    BookingStartTripRequest,
+    BookingEndTripRequest,
+    BookingCarSummary,
+    BookingResponse,
+    PaginatedBookingResponse,
+)
 
 __all__ = [
     "HealthCheckResponse",
@@ -50,4 +88,31 @@ __all__ = [
     "UserStatusUpdateRequest",
     "UserDetailResponse",
     "PaginatedUserResponse",
+    "CarImageCreateRequest",
+    "CarImageResponse",
+    "CarDocumentCreateRequest",
+    "CarDocumentResponse",
+    "DocumentVerificationRequest",
+    "BlackoutPeriodCreateRequest",
+    "BlackoutPeriodResponse",
+    "CarCreateRequest",
+    "CarUpdateRequest",
+    "CarApprovalRequest",
+    "CarStatusUpdateRequest",
+    "CarDetailResponse",
+    "CarPublicResponse",
+    "PaginatedCarPublicResponse",
+    "PaginatedCarDetailResponse",
+    "BookingCreateRequest",
+    "BookingPricingEstimateRequest",
+    "BookingPricingEstimateResponse",
+    "BookingPaymentConfirmRequest",
+    "BookingDecisionRequest",
+    "BookingDriverAssignRequest",
+    "BookingCancelRequest",
+    "BookingStartTripRequest",
+    "BookingEndTripRequest",
+    "BookingCarSummary",
+    "BookingResponse",
+    "PaginatedBookingResponse",
 ]

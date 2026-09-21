@@ -36,6 +36,8 @@ class CarStatus(str, Enum):
     AVAILABLE = "AVAILABLE"
     MAINTENANCE = "MAINTENANCE"
     INACTIVE = "INACTIVE"
+    REJECTED = "REJECTED"
+    SUSPENDED = "SUSPENDED"
 
 
 class DriverVerificationStatus(str, Enum):

@@ -182,6 +182,42 @@ The server will start at `http://127.0.0.1:8000`.
 
 ---
 
+## Phase 5: Car Fleet Management
+
+### Endpoints Overview
+
+| Method | Endpoint | Authorization | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/owners/me/cars` | `OWNER` | Register a new vehicle. Auto-assigned to owner and set to `PENDING_APPROVAL`. Unique plate enforced. |
+| `GET` | `/api/v1/owners/me/cars` | `OWNER` | List owned fleet vehicles with pagination (`page`, `page_size`) and status filter. |
+| `GET` | `/api/v1/owners/me/cars/{car_id}` | `OWNER` | Retrieve full technical specifications, images, compliance documents, and blackout windows of an owned car. |
+| `PATCH` | `/api/v1/owners/me/cars/{car_id}` | `OWNER` | Update permissible specifications (odometer, city, address, delivery, booking options). Pricing & status modifications forbidden. |
+| `DELETE` | `/api/v1/owners/me/cars/{car_id}` | `OWNER` | Safely remove car: hard deleted if 0 bookings exist; archived to `INACTIVE` if historical bookings exist. |
+| `POST` | `/api/v1/owners/me/cars/{car_id}/images` | `OWNER` | Add vehicle gallery photo (`image_url`, `is_primary`, `caption`). Setting `is_primary=True` resets existing primary. |
+| `GET` | `/api/v1/owners/me/cars/{car_id}/images` | `OWNER` | List all photos in vehicle photo gallery. |
+| `DELETE` | `/api/v1/owners/me/cars/{car_id}/images/{image_id}`| `OWNER` | Delete photo from vehicle gallery. |
+| `POST` | `/api/v1/owners/me/cars/{car_id}/documents` | `OWNER` | Upload compliance document (`RC_BOOK`, `INSURANCE`, etc.). Resets verification to `PENDING`. |
+| `GET` | `/api/v1/owners/me/cars/{car_id}/documents` | `OWNER` | List all uploaded compliance documents with verification statuses. |
+| `POST` | `/api/v1/owners/me/cars/{car_id}/blackout-periods` | `OWNER` | Schedule an unavailability interval. Validates UTC timezone awareness and rejects overlapping intervals with `409 Conflict`. |
+| `GET` | `/api/v1/owners/me/cars/{car_id}/blackout-periods` | `OWNER` | List scheduled unavailability windows for owned car. |
+| `DELETE` | `/api/v1/owners/me/cars/{car_id}/blackout-periods/{period_id}`| `OWNER` | Remove scheduled blackout interval. |
+| `GET` | `/api/v1/admin/cars` | `ADMIN` | List all vehicles across all fleet owners with pagination and status filtering. |
+| `GET` | `/api/v1/admin/cars/{car_id}` | `ADMIN` | Detailed vehicle inspection including sensitive registration, insurance, and compliance documents. |
+| `PATCH` | `/api/v1/admin/cars/{car_id}/approval` | `ADMIN` | Approve (`AVAILABLE`) or reject (`REJECTED` + reason) vehicle onboarding request. |
+| `PATCH` | `/api/v1/admin/cars/{car_id}/status` | `ADMIN` | Change operational status (`MAINTENANCE`, `AVAILABLE`, `SUSPENDED`, `INACTIVE`). |
+| `PATCH` | `/api/v1/admin/car-documents/{doc_id}/verification` | `ADMIN` | Verify (`VERIFIED`) or reject (`REJECTED` + reason) vehicle compliance document. |
+| `GET` | `/api/v1/cars` | Public | Search available vehicles (`status == 'AVAILABLE'`). Supports city, fuel, transmission, seating, and rate filters. Excludes sensitive data. |
+| `GET` | `/api/v1/cars/{car_id}` | Public | Public sanitized view of an available vehicle. Sensitive RC, insurance, and owner documents strictly hidden. Returns `404` for unapproved cars. |
+
+### Security & Privacy Safeguards
+1. **Public Privacy Protection**: Public vehicle search and detail endpoints sanitize sensitive data—never exposing RC numbers, insurance policy details, owner identities, or compliance documents.
+2. **Platform-Controlled Pricing**: Hourly, daily, and weekly rates are immutable to owners via `PATCH /owners/me/cars/{car_id}` to prevent unauthorized price tampering.
+3. **Strict Ownership Scoping**: Every owner operation enforces verified vehicle ownership at the service layer; cross-owner access returns `403 Forbidden`.
+4. **Booking Integrity & Safe Archival**: Vehicles with historical booking transactions cannot be hard-deleted (enforced by DB `RESTRICT` constraint); they are gracefully soft-archived to `INACTIVE`.
+5. **Conflict-Free Blackouts**: Blackout intervals require timezone-aware UTC datetimes and reject overlapping intervals with `409 Conflict`.
+
+---
+
 ## Running Automated Tests
 
 Run the complete test suite using `pytest`:
@@ -190,14 +226,14 @@ Run the complete test suite using `pytest`:
 pytest tests/ -v
 ```
 
-**Results**: `47 passed` across 6 test modules in ~45s.
+**Results**: `63 passed` across 11 test modules.
 
 ---
 
 ## Database Migration Status
 
 - Current head: `27e092d7c8ce`
-- Phase 4 reuses the existing Supabase PostgreSQL schema created in Phase 2.
+- Phase 5 utilizes the existing Supabase PostgreSQL schema (`cars`, `car_images`, `car_documents`, `car_blackout_periods`) provisioned in Phase 2.
 - **No new Alembic migration was required**.
 
 ---
@@ -208,7 +244,7 @@ pytest tests/ -v
 - [x] **Phase 2: Database Design** (Entities, Relationships, Constraints, Migrations)
 - [x] **Phase 3: Authentication & Multi-Role Authorization** (JWT, Password Hashing, RBAC)
 - [x] **Phase 4: User & Profile Management** (Customers, Owners, Drivers, Admin RBAC)
-- [ ] **Phase 5: Car Fleet Management** (Specifications, Availability, Pricing Rules)
+- [x] **Phase 5: Car Fleet Management** (Specifications, Availability, Pricing Rules)
 - [ ] **Phase 6: Booking Engine** (Self-drive, Car-with-driver, Overlap Prevention)
 - [ ] **Phase 7: Pricing & Payments** (Dynamic pricing service, mock payment workflows)
 - [ ] **Phase 8: Cancellation & Refunds** (State checks, refund calculation)

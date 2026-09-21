@@ -123,3 +123,39 @@ def update_user_status(
     """Activate or deactivate user account."""
     admin_service = AdminService(db)
     return admin_service.update_user_status(user_id, request.is_active, current_admin.id)
+
+
+from pydantic import BaseModel, ConfigDict
+from app.models.enums import DriverVerificationStatus
+from app.schemas.driver import DriverProfileResponse
+
+
+class DriverVerificationUpdateRequest(BaseModel):
+    verification_status: DriverVerificationStatus
+    model_config = ConfigDict(extra="forbid")
+
+
+@router.patch(
+    "/drivers/{user_id}/verification",
+    response_model=DriverProfileResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Verify Driver (Admin)",
+    description="Approve or reject a commercial driver profile. Requires ADMIN role.",
+)
+def update_driver_verification(
+    user_id: UUID,
+    request: DriverVerificationUpdateRequest,
+    current_admin: User = Depends(require_roles(RoleName.ADMIN.value)),
+    db: Session = Depends(get_db),
+) -> DriverProfileResponse:
+    """Admin approves or rejects a driver's verification status."""
+    from sqlalchemy import select
+    from app.models.user import User as UserModel
+    driver_user = db.scalars(select(UserModel).where(UserModel.id == user_id)).first()
+    if not driver_user or not driver_user.driver_profile:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver profile not found")
+    driver_user.driver_profile.verification_status = request.verification_status.value
+    db.commit()
+    db.refresh(driver_user.driver_profile)
+    return DriverProfileResponse.model_validate(driver_user.driver_profile)
